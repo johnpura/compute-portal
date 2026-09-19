@@ -117,6 +117,22 @@ def register_routes(app):
     @app.route("/api/jobs/<int:job_id>/approve", methods=["POST"])
     def approve_job(job_id):
         job = Job.query.get_or_404(job_id)
+
+        # Don't let approvals push the cluster past its GPU capacity.
+        in_use = (
+            db.session.query(func.coalesce(func.sum(Job.gpu_count), 0))
+            .filter(Job.status.in_(["approved", "running"]))
+            .scalar()
+        )
+        remaining = CLUSTER_GPU_CAPACITY - in_use
+        if job.gpu_count > remaining:
+            return jsonify(
+                {
+                    "error": f"Not enough capacity: {remaining} GPU(s) available, "
+                    f"job requests {job.gpu_count}."
+                }
+            ), 409
+
         job.status = "approved"
         db.session.commit()
         return jsonify(job.to_dict())
