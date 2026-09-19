@@ -1,4 +1,4 @@
-# Compute Portal (demo)
+# Compute Portal
 
 A small self-service portal for an imaginary AI compute cluster. Researchers
 request GPU jobs, an operations dashboard shows utilization, and an admin view
@@ -97,8 +97,6 @@ npm run dev
 ```
 
 ## Suggested next steps
-
-These map to things the job mentions and make good "what I'd add next" interview answers:
 
 - Replace the researcher dropdown with real login/authentication.
 - Add a "running → completed" transition with timestamps and real duration.
