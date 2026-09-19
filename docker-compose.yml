@@ -1,0 +1,52 @@
+# docker-compose.yml
+# -------------------
+# Brings up the whole stack with one command:
+#
+#     docker compose up --build
+#
+# Three services:
+#   db        - PostgreSQL, the database
+#   backend   - the Flask REST API (waits for db, seeds it, then serves)
+#   frontend  - the React dev server
+#
+# Open http://localhost:5173 once everything is running.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: portal
+      POSTGRES_PASSWORD: portal
+      POSTGRES_DB: portal
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg2://portal:portal@db:5432/portal
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    environment:
+      # The browser reaches the backend on the host's published port.
+      VITE_API_URL: http://localhost:5000/api
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
